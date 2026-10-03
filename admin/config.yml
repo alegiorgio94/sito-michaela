@@ -1,0 +1,19 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "content/blog/uploads"
+public_folder: "/content/blog/uploads"
+
+collections:
+  - name: "blog"
+    label: "Articoli del Blog"
+    folder: "content/blog"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Titolo", name: "title", widget: "string" }
+      - { label: "Data", name: "date", widget: "datetime" }
+      - { label: "Estratto", name: "excerpt", widget: "text", required: false, hint: "Breve riassunto mostrato nell'elenco articoli" }
+      - { label: "Immagine di copertina", name: "image", widget: "image", required: false }
+      - { label: "Contenuto", name: "body", widget: "markdown" }

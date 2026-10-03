@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Articolo — Michaela Saponaro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<style>
+  :root{
+    --wine:#6B1E2B; --wine-deep:#4A1420; --ink:#211C1B;
+    --paper:#F7F2EA; --paper-dim:#EFE7D8; --gold:#A9822E; --gray:#756B62; --line:rgba(33,28,27,0.14);
+    --max:720px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ background:var(--paper); color:var(--ink); font-family:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,serif; line-height:1.75; }
+  a{ color:var(--wine); }
+  .wrap{ max-width:var(--max); margin:0 auto; padding:0 28px; }
+  nav{ border-bottom:1px solid var(--line); padding:20px 0; }
+  .nav-inner{ max-width:var(--max); margin:0 auto; padding:0 28px; display:flex; justify-content:space-between; align-items:center; }
+  .brand{ font-size:18px; font-weight:600; color:var(--wine-deep); text-decoration:none; }
+  .back{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:13px; font-weight:600; text-decoration:none; color:var(--wine); }
+  article{ padding:50px 0 90px; }
+  .post-date{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--gold); }
+  article h1{ font-size:clamp(28px,5vw,42px); color:var(--wine-deep); margin:12px 0 28px; line-height:1.15; }
+  .post-body{ font-size:17px; }
+  .post-body p{ margin-bottom:18px; }
+  .post-body img{ max-width:100%; border-radius:2px; margin:20px 0; }
+  .post-body h2{ color:var(--wine-deep); margin:32px 0 14px; font-size:24px; }
+  .post-body blockquote{ border-left:3px solid var(--gold); padding-left:18px; opacity:0.85; font-style:italic; margin:20px 0; }
+  footer{ padding:30px 32px; text-align:center; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:12px; color:var(--gray); }
+  .loading{ color:var(--gray); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="brand" href="/">Michaela Saponaro</a>
+    <a class="back" href="/blog/">← Tutti gli articoli</a>
+  </div>
+</nav>
+
+<article class="wrap">
+  <div id="content"><p class="loading">Caricamento…</p></div>
+</article>
+
+<footer>Michaela Saponaro — Traduttrice · Interprete · Docente di lingue</footer>
+
+<script>
+const OWNER = "alegiorgio94";
+const REPO = "sito-michaela";
+const FOLDER = "content/blog";
+
+function parseFrontmatter(raw) {
+  const match = raw.match(/^---\s*([\s\S]*?)\s*---\s*([\s\S]*)$/);
+  if (!match) return { data: {}, body: raw };
+  const yamlBlock = match[1];
+  const body = match[2];
+  const data = {};
+  yamlBlock.split("\n").forEach(line => {
+    const idx = line.indexOf(":");
+    if (idx === -1) return;
+    const key = line.slice(0, idx).trim();
+    let val = line.slice(idx + 1).trim();
+    val = val.replace(/^['"]|['"]$/g, "");
+    data[key] = val;
+  });
+  return { data, body };
+}
+
+async function loadPost() {
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get("slug");
+  const contentEl = document.getElementById("content");
+  if (!slug) {
+    contentEl.innerHTML = "<p>Articolo non trovato.</p>";
+    return;
+  }
+  try {
+    const url = `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/${FOLDER}/${slug}.md`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("not found");
+    const raw = await res.text();
+    const { data, body } = parseFrontmatter(raw);
+
+    document.title = (data.title || "Articolo") + " — Michaela Saponaro";
+
+    const dateStr = data.date ? new Date(data.date).toLocaleDateString("it-IT", {day:"numeric", month:"long", year:"numeric"}) : "";
+
+    contentEl.innerHTML = `
+      <div class="post-date">${dateStr}</div>
+      <h1>${data.title || ""}</h1>
+      ${data.image ? `<img src="${data.image}" alt="" style="width:100%;border-radius:2px;margin-bottom:24px;">` : ""}
+      <div class="post-body">${marked.parse(body)}</div>
+    `;
+  } catch (e) {
+    contentEl.innerHTML = "<p>Articolo non trovato.</p>";
+  }
+}
+loadPost();
+</script>
+
+</body>
+</html>
