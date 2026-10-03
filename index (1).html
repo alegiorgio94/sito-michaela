@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog — Michaela Saponaro</title>
+<meta name="description" content="Articoli di Michaela Saponaro su lingue, traduzione, letteratura e didattica.">
+<style>
+  :root{
+    --wine:#6B1E2B; --wine-deep:#4A1420; --ink:#211C1B;
+    --paper:#F7F2EA; --paper-dim:#EFE7D8; --gold:#A9822E; --gray:#756B62; --line:rgba(33,28,27,0.14);
+    --max:860px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ background:var(--paper); color:var(--ink); font-family:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,serif; line-height:1.65; }
+  a{ color:inherit; }
+  .wrap{ max-width:var(--max); margin:0 auto; padding:0 28px; }
+  .ui{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  nav{ border-bottom:1px solid var(--line); padding:20px 0; }
+  .nav-inner{ max-width:var(--max); margin:0 auto; padding:0 28px; display:flex; justify-content:space-between; align-items:center; }
+  .brand{ font-size:18px; font-weight:600; color:var(--wine-deep); text-decoration:none; }
+  .back{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:13px; font-weight:600; text-decoration:none; color:var(--wine); }
+  header.hero{ padding:56px 0 36px; text-align:center; }
+  header.hero h1{ font-size:clamp(32px,5vw,46px); color:var(--wine-deep); }
+  header.hero p{ margin-top:10px; color:var(--gray); font-size:15px; }
+  main{ padding:20px 0 90px; }
+  .post-card{ display:block; text-decoration:none; color:inherit; padding:26px 0; border-top:1px solid var(--line); }
+  .post-card:last-child{ border-bottom:1px solid var(--line); }
+  .post-date{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--gold); }
+  .post-card h2{ font-size:23px; margin:8px 0 8px; color:var(--wine-deep); }
+  .post-card p{ font-size:15px; opacity:0.85; }
+  .post-card:hover h2{ color:var(--wine); }
+  .empty{ text-align:center; padding:60px 20px; color:var(--gray); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .empty a{ color:var(--wine); font-weight:600; }
+  footer{ padding:30px 32px; text-align:center; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:12px; color:var(--gray); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="brand" href="/">Michaela Saponaro</a>
+    <a class="back" href="/">← Torna al sito</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <h1>Blog</h1>
+  <p>Lingue, traduzione, letteratura e didattica.</p>
+</header>
+
+<main class="wrap">
+  <div id="postList">
+    <div class="empty">Caricamento articoli…</div>
+  </div>
+</main>
+
+<footer>Michaela Saponaro — Traduttrice · Interprete · Docente di lingue</footer>
+
+<script>
+const OWNER = "alegiorgio94";
+const REPO = "sito-michaela";
+const FOLDER = "content/blog";
+
+function parseFrontmatter(raw) {
+  const match = raw.match(/^---\s*([\s\S]*?)\s*---\s*([\s\S]*)$/);
+  if (!match) return { data: {}, body: raw };
+  const yamlBlock = match[1];
+  const body = match[2];
+  const data = {};
+  yamlBlock.split("\n").forEach(line => {
+    const idx = line.indexOf(":");
+    if (idx === -1) return;
+    const key = line.slice(0, idx).trim();
+    let val = line.slice(idx + 1).trim();
+    val = val.replace(/^['"]|['"]$/g, "");
+    data[key] = val;
+  });
+  return { data, body };
+}
+
+async function loadPosts() {
+  const listEl = document.getElementById("postList");
+  try {
+    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FOLDER}`);
+    if (!res.ok) throw new Error("fetch failed");
+    const files = await res.json();
+    const mdFiles = files.filter(f => f.name.endsWith(".md"));
+
+    if (mdFiles.length === 0) {
+      listEl.innerHTML = `<div class="empty">Nessun articolo ancora pubblicato. Torna presto!</div>`;
+      return;
+    }
+
+    const posts = await Promise.all(mdFiles.map(async f => {
+      const rawRes = await fetch(f.download_url);
+      const raw = await rawRes.text();
+      const { data } = parseFrontmatter(raw);
+      return {
+        slug: f.name.replace(/\.md$/, ""),
+        title: data.title || f.name,
+        date: data.date || "",
+        excerpt: data.excerpt || ""
+      };
+    }));
+
+    posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    listEl.innerHTML = posts.map(p => `
+      <a class="post-card" href="/blog/post.html?slug=${encodeURIComponent(p.slug)}">
+        <div class="post-date">${p.date ? new Date(p.date).toLocaleDateString("it-IT", {day:"numeric", month:"long", year:"numeric"}) : ""}</div>
+        <h2>${p.title}</h2>
+        <p>${p.excerpt}</p>
+      </a>
+    `).join("");
+  } catch (e) {
+    listEl.innerHTML = `<div class="empty">Nessun articolo ancora pubblicato. Torna presto!</div>`;
+  }
+}
+loadPosts();
+</script>
+
+</body>
+</html>
