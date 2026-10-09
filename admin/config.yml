@@ -1,5 +1,6 @@
 backend:
-  name: git-gateway
+  name: github
+  repo: alegiorgio94/sito-michaela
   branch: main
 
 media_folder: "content/blog/uploads"
