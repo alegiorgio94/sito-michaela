@@ -34,6 +34,9 @@
   .empty a{ color:var(--wine); font-weight:600; }
   footer{ padding:30px 32px; text-align:center; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:12px; color:var(--gray); }
 </style>
+<script>
+window.onerror=function(m,src,l,c){var e=document.getElementById("postList");if(e){e.innerHTML='<div class="empty">Errore: '+m+' (riga '+l+')</div>';}};
+</script>
 </head>
 <body>
 
@@ -62,34 +65,4 @@ const OWNER = "alegiorgio94";
 const REPO = "sito-michaela";
 const FOLDER = "content/blog";
 
-function parseFrontmatter(raw) {
-  const match = raw.match(/^---\s*([\s\S]*?)\s*---\s*([\s\S]*)$/);
-  if (!match) return { data: {}, body: raw };
-  const yamlBlock = match[1];
-  const body = match[2];
-  const data = {};
-  yamlBlock.split("\n").forEach(line => {
-    const idx = line.indexOf(":");
-    if (idx === -1) return;
-    const key = line.slice(0, idx).trim();
-    let val = line.slice(idx + 1).trim();
-    val = val.replace(/^['"]|['"]$/g, "");
-    data[key] = val;
-  });
-  return { data, body };
-}
-
-async function loadPosts() {
-  const listEl = document.getElementById("postList");
-  try {
-    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FOLDER}`);
-    if (!res.ok) throw new Error("fetch failed");
-    const files = await res.json();
-    const mdFiles = files.filter(f => f.name.endsWith(".md"));
-
-    if (mdFiles.length === 0) {
-      listEl.innerHTML = `<div class="empty">Nessun articolo ancora pubblicato. Torna presto!</div>`;
-      return;
-    }
-
-    const posts = await
+function parseFrontmatter(raw)
